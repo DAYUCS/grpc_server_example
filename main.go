@@ -33,18 +33,21 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/api7/grpc_server_example/proto"
+	pb "github.com/DAYUCS/grpc_server_example/proto"
 )
 
 var (
@@ -52,9 +55,11 @@ var (
 	grpcsAddr     = ":50052"
 	grpcsMtlsAddr string
 
-	crtFilePath = "../t/cert/apisix.crt"
-	keyFilePath = "../t/cert/apisix.key"
+	crtFilePath = "./t/cert/apisix.crt"
+	keyFilePath = "./t/cert/apisix.key"
 	caFilePath  string
+
+	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:50051", "gRPC server endpoint")
 )
 
 func init() {
@@ -247,6 +252,24 @@ func main() {
 			}
 		}()
 	}
+
+	go func() {
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		// Register gRPC server endpoint
+		// Note: Make sure the gRPC server is running properly and accessible
+		mux := runtime.NewServeMux()
+		opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+		err := pb.RegisterGreeterHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
+		if err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+
+		// Start HTTP server (and proxy calls to gRPC server endpoint)
+		http.ListenAndServe(":8081", mux)
+	}()
 
 	signals := make(chan os.Signal)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)

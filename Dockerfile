@@ -1,4 +1,4 @@
-FROM golang:1.14.10 AS build-env
+FROM golang:1.19.3 AS build-env
 
 RUN rm -rf /etc/localtime \
     && ln -s /usr/share/zoneinfo/Hongkong /etc/localtime \
@@ -17,4 +17,5 @@ COPY --from=build-env /build/t t/
 WORKDIR /grpc_server_example/bin
 EXPOSE 50051
 EXPOSE 50052
+EXPOSE 8081
 ENTRYPOINT ["/grpc_server_example/bin/grpc_server_example"]
