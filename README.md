@@ -1,11 +1,11 @@
 #### Dependencies
-golang v1.11+
+golang v1.19.3+
 
 # run
 
 ```shell
 cd path_to_grpc_server_example
-
+(change crtFilePath & keyFilePath before run)
 go run main.go
 ```
 
