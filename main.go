@@ -55,8 +55,8 @@ var (
 	grpcsAddr     = ":50052"
 	grpcsMtlsAddr string
 
-	crtFilePath = "./t/cert/apisix.crt"
-	keyFilePath = "./t/cert/apisix.key"
+	crtFilePath = "../t/cert/apisix.crt"
+	keyFilePath = "../t/cert/apisix.key"
 	caFilePath  string
 
 	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:50051", "gRPC server endpoint")
