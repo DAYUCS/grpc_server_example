@@ -1,10 +1,10 @@
 const { HelloRequest, HelloReply } = require('./helloworld_pb.js');
 const { GreeterClient } = require('./helloworld_grpc_web_pb.js');
 
-var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 //Apisix grpc-web
-var client = new GreeterClient("http://10.39.101.186:9080/grpc/web");
+var client = new GreeterClient("http://10.39.101.186:9080/grpc/web/");
 
 //Make an unary RPC call
 var request = new HelloRequest();
