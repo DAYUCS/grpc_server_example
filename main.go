@@ -59,7 +59,7 @@ var (
 	keyFilePath = "../t/cert/apisix.key"
 	caFilePath  string
 
-	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:50051", "gRPC server endpoint")
+	grpcServerEndpoint = flag.String("grpc-server-endpoint", "127.0.0.1:50051", "gRPC server endpoint")
 )
 
 func init() {
