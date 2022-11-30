@@ -268,7 +268,7 @@ func main() {
 		}
 
 		// Start HTTP server (and proxy calls to gRPC server endpoint)
-		http.ListenAndServe(":8081", mux)
+		http.ListenAndServe(":50053", mux)
 	}()
 
 	signals := make(chan os.Signal)

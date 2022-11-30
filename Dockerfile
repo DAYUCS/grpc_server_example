@@ -17,5 +17,5 @@ COPY --from=build-env /build/t t/
 WORKDIR /grpc_server_example/bin
 EXPOSE 50051
 EXPOSE 50052
-EXPOSE 8081
+EXPOSE 50053
 ENTRYPOINT ["/grpc_server_example/bin/grpc_server_example"]

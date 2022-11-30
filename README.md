@@ -13,5 +13,5 @@ go run main.go
 
 ```shell
 docker build -t grpc_server_example:latest .
-docker run grpc_server_example:latest
+docker run -p 50051:50051 -p 50052:50052 -p 50053:50053 grpc_server_example:latest
 ```
