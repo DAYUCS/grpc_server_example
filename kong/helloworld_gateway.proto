@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package helloworld;
+
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {
+    option (google.api.http) = {
+      post: "/gw/v1/message/"
+      body: "*"
+    };
+  }
+}
+
+enum Gender {
+    GENDER_UNKNOWN = 0;
+    GENDER_MALE = 1;
+    GENDER_FEMALE = 2;
+}
+
+message Person {
+    string name = 1;
+    int32 age = 2;
+}
+
+message HelloRequest {
+  string name = 1;
+  repeated string items = 2;
+  Gender gender = 3;
+  Person person = 4;
+}
+
+message HelloReply {
+  string message = 1;
+  repeated string items = 2;
+  Gender gender = 3;
+}

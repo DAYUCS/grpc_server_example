@@ -1,0 +1,71 @@
+docker network create kong-net
+
+docker run -d --name kong-database \
+  --network=kong-net \
+  -p 5432:5432 \
+  -e "POSTGRES_USER=kong" \
+  -e "POSTGRES_DB=kong" \
+  -e "POSTGRES_PASSWORD=kongpass" \
+  postgres:9.6
+
+docker run --rm --network=kong-net \
+  -e "KONG_DATABASE=postgres" \
+  -e "KONG_PG_HOST=kong-database" \
+  -e "KONG_PG_PASSWORD=kongpass" \
+ kong:3.0.1 kong migrations bootstrap
+
+docker run -d --name kong-gateway \
+  --network=kong-net \
+  -e "KONG_DATABASE=postgres" \
+  -e "KONG_PG_HOST=kong-database" \
+  -e "KONG_PG_USER=kong" \
+  -e "KONG_PG_PASSWORD=kongpass" \
+  -e "KONG_PROXY_ACCESS_LOG=/dev/stdout" \
+  -e "KONG_ADMIN_ACCESS_LOG=/dev/stdout" \
+  -e "KONG_PROXY_ERROR_LOG=/dev/stderr" \
+  -e "KONG_ADMIN_ERROR_LOG=/dev/stderr" \
+  -e "KONG_ADMIN_LISTEN=0.0.0.0:8001, 0.0.0.0:8444 ssl" \
+  -p 8000:8000 \
+  -p 8443:8443 \
+  -p 127.0.0.1:8001:8001 \
+  -p 127.0.0.1:8444:8444 \
+  kong:3.0.1
+
+docker run -d --name grpc-server \
+  --network=kong-net \
+  -p 50051:50051 \
+  -p 50052:50052 \
+  -p 50053:50053 \
+  grpc_server_example:latest
+
+//gRPC-Gateway plugin configuration:
+
+curl -X POST localhost:8001/services \
+--data 'name=helloworld-service' \
+--data 'url=grpc://grpc-server:50051'
+
+curl -X POST localhost:8001/services/helloworld-service/routes \
+--data 'name=helloworld-gw-route' \
+--data 'paths=/gw/' \
+--data 'methods=POST' \
+--data 'headers.x-grpc=true'
+
+curl -X POST localhost:8001/routes/helloworld-gw-route/plugins \
+--data 'name=grpc-gateway' \
+--data 'config.proto=/usr/local/kong/helloworld_gateway.proto'
+
+docker cp helloworld_gateway.proto kong-gateway:/usr/local/kong/
+
+//gRPC-Web plugin configuration (use the service defined above)
+
+curl -X POST localhost:8001/services/helloworld-service/routes \
+--data 'name=helloworld-wb-route' \
+--data 'paths=/wb/' \
+--data 'methods=POST' \
+--data 'headers.x-grpc=true'
+
+curl -X POST localhost:8001/routes/helloworld-wb-route/plugins \
+--data 'name=grpc-web' \
+--data 'config.proto=/usr/local/kong/helloworld_web.proto'
+
+docker cp helloworld_web.proto kong-gateway:/usr/local/kong/
