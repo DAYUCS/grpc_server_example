@@ -133,6 +133,8 @@ func (s *server) SayHelloServerStream(req *pb.HelloRequest, stream pb.Greeter_Sa
 	for i := 0; i < 5; i++ {
 		if err := stream.Send(&pb.HelloReply{
 			Message: fmt.Sprintf("Hello %s", req.Name),
+			Items:   req.GetItems(),
+			Gender:  req.GetGender(),
 		}); err != nil {
 			return status.Errorf(codes.Unavailable, "Unable to stream request back to client: %v", err)
 		}
