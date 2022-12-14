@@ -12,7 +12,7 @@ docker run --rm --network=kong-net \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
   -e "KONG_PG_PASSWORD=kongpass" \
- kong:3.0.1 kong migrations bootstrap
+ kong:3.1.1 kong migrations bootstrap
 
 docker run -d --name kong-gateway \
   --network=kong-net \
@@ -27,9 +27,9 @@ docker run -d --name kong-gateway \
   -e "KONG_ADMIN_LISTEN=0.0.0.0:8001, 0.0.0.0:8444 ssl" \
   -p 8000:8000 \
   -p 8443:8443 \
-  -p 127.0.0.1:8001:8001 \
-  -p 127.0.0.1:8444:8444 \
-  kong:3.0.1
+  -p 8001:8001 \
+  -p 8444:8444 \
+  kong:3.1.1
 
 docker run -d --name grpc-server \
   --network=kong-net \
@@ -38,12 +38,12 @@ docker run -d --name grpc-server \
   -p 50053:50053 \
   grpc_server_example:latest
 
-//gRPC-Gateway plugin configuration:
-
+//gRPC service configuration:
 curl -X POST localhost:8001/services \
 --data 'name=helloworld-service' \
 --data 'url=grpc://grpc-server:50051'
 
+//gRPC-Gateway plugin configuration
 curl -X POST localhost:8001/services/helloworld-service/routes \
 --data 'name=helloworld-gw-route' \
 --data 'paths=/gw/' \
@@ -56,16 +56,41 @@ curl -X POST localhost:8001/routes/helloworld-gw-route/plugins \
 
 docker cp helloworld_gateway.proto kong-gateway:/usr/local/kong/
 
-//gRPC-Web plugin configuration (use the service defined above)
-
+//gRPC-Web plugin configuration
 curl -X POST localhost:8001/services/helloworld-service/routes \
---data 'name=helloworld-wb-route' \
---data 'paths=/wb/' \
---data 'methods=POST' \
---data 'headers.x-grpc=true'
+--data protocols=http \
+--data name=helloworld-wb-route \
+--data paths[]=/ 
 
 curl -X POST localhost:8001/routes/helloworld-wb-route/plugins \
 --data 'name=grpc-web' \
 --data 'config.proto=/usr/local/kong/helloworld_web.proto'
 
 docker cp helloworld_web.proto kong-gateway:/usr/local/kong/
+
+//run client http server
+docker run -d --name simple-http-server \
+  -p 80:8082 \
+  simple-http-server:latest
+
+// enable kong cors plugin
+curl -X POST http://localhost:8001/plugins/ \
+    --data "name=cors"  \
+    --data "config.origins=*" \
+    --data "config.methods=GET" \
+    --data "config.methods=POST" \
+    --data "config.methods=OPTIONS" \
+    --data "config.headers=Accept" \
+    --data "config.headers=Accept-Version" \
+    --data "config.headers=Content-Length" \
+    --data "config.headers=Content-MD5" \
+    --data "config.headers=Content-Type" \
+    --data "config.headers=Date" \
+    --data "config.headers=X-Grpc-Web" \
+    --data "config.headers=X-Auth-Token" \
+    --data "config.headers=X-User-Agent" \
+    --data "config.exposed_headers=X-Grpc-Web" \
+    --data "config.exposed_headers=X-Auth-Token" \
+    --data "config.exposed_headers=X-User-Agent" \
+    --data "config.credentials=true" \
+    --data "config.max_age=3600"

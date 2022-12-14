@@ -2,7 +2,7 @@ const { HelloRequest, Person } = require('./helloworld_pb.js');
 const { GreeterClient } = require('./helloworld_grpc_web_pb.js');
 
 //Enovy grpc-web
-var client = new GreeterClient('http://10.39.107.102:8080', null, null);
+var client = new GreeterClient('http://10.39.107.102:8000', null, null);
 
 //Make an unary RPC call
 var request = new HelloRequest();
